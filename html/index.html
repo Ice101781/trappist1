@@ -4,54 +4,15 @@
     <head>
         <link rel="stylesheet" href="../css/index.css" />
         <script src="../js/three.js"></script>
+        <script src="../js/index.js"></script>
     </head>
 
     <body>
         <div id="threejs-container"></div>
 
         <script>
-            "use strict";
-
-            var VISUALS = (function(near, far) {
-
-                var container = document.getElementById("threejs-container"),
-                    width = container.offsetWidth,
-                    height = container.offsetHeight;
-
-                var renderer = new THREE.WebGLRenderer();
-                renderer.setSize(width, height);
-                renderer.setClearColor(0x000000, 1);
-                container.appendChild(renderer.domElement);
-
-                var scene = new THREE.Scene(),
-                    light = new THREE.AmbientLight(0x404040);
-                
-                var vfovDEG = 50,
-                    minDist = near,
-                    maxDist = far,
-                    camera = new THREE.PerspectiveCamera(50, width/height, minDist, maxDist);
-                camera.position.z = 14;
-
-                //create the planet
-                var planetGeom = new THREE.SphereGeometry(5, 25, 25),
-                    planetMat = new THREE.MeshBasicMaterial({wireframe: true, color: 'green'}),
-                    planet = new THREE.Mesh(planetGeom, planetMat);
-                planet.position.set(0,0,0);
-
-                //add objects to the scene and render it
-                scene.add(light, camera, planet);
-                render();
-
-                function render() {
-                    planet.rotation.y += 0.0025;
-                    renderer.render(scene, camera);
-                    requestAnimationFrame(render);
-                }
-
-                return {
-                    //public
-                };
-            })(1, 1000);
+            //launch visuals
+            VISUALS();
         </script>
     </body>
 </html>
