@@ -2,58 +2,77 @@
 
 var VISUALS = function() {
 
-    //cache DOM and dimensions
     var container = document.getElementById("threejs-container"),
         width = container.offsetWidth,
-        height = container.offsetHeight;
+        height = container.offsetHeight,
+        renderer = setupWebGLRenderer({antialias: true}, 'black'),
+        scene = new THREE.Scene();
 
-    var renderer = new THREE.WebGLRenderer({antialias: true});
-    renderer.setSize(width, height);
-    renderer.setClearColor(0x000000, 1);
-    container.appendChild(renderer.domElement);
+    var starPos = new THREE.Vector3(0,0,0),
+        home = new THREE.Vector3(-50,250,400),
+        planet = createSatellite(10, 100, "Phong", "../img/mercury_enhanced_color.jpg", starPos, home),
+        moon = createSatellite(1, 50, "Phong", "../img/europa.jpg", planet.position, new THREE.Vector3(-25, 2, 15));
 
-    var scene = new THREE.Scene(),
-        light = new THREE.AmbientLight(0xffffff);
+    var light = setupLight("Ambient", 'white'),
+        camera = setupCamera(0.01, 1000, home, new THREE.Vector3(0,0,40), new THREE.Vector3(-10,0,0));
 
-    //create the planet
-    var planet = new THREE.Mesh(new THREE.SphereGeometry(1, 100, 100), createTextureMaterial("Phong", "../img/mercury_enhanced_color.jpg"));
-    planet.position.set(-50,250,400);
-    //planet.rotation.set(0,0,0);
-
-    //set up the camera
-    var camera = new THREE.PerspectiveCamera(50, width/height, 0.1, 1000),
-        camParentPos = planet.position.clone();
-    camera.position.copy(camParentPos.clone().add(new THREE.Vector3(1,1,1.5)));
-    camera.lookAt(camParentPos.clone().add(new THREE.Vector3(1,0.5,0)));
-
-    //add objects to the scene and render it
-    scene.add(light, planet);
     render();
 
-    //render function
     function render() {
-        planet.rotation.y += 0.0003;
+        //camera orbit
         renderer.render(scene, camera);
         requestAnimationFrame(render);
+    }
+
+    //add satellite
+    function createSatellite(radius, numSegments, matType, imgPath, parPos, relPos) {
+        var sat = new THREE.Mesh(new THREE.SphereGeometry(radius, numSegments, numSegments), createTextureMaterial(matType, imgPath));
+        sat.position.copy(parPos.clone().add(relPos));
+        scene.add(sat);
+        return sat;
     }
 
     //load and add texture to material
     function createTextureMaterial(matType, imgPath) {
         var img = new Image(),
-            material = matType === "Phong" ? new THREE.MeshPhongMaterial() : new THREE.MeshBasicMaterial();
-
+            mat = matType === "Phong" ? new THREE.MeshPhongMaterial() : new THREE.MeshBasicMaterial();
         img.src = imgPath;
         img.onload = function() {
             var texture = new THREE.Texture(this);
             texture.needsUpdate = true;
 
-            material.map = texture;
-            material.needsUpdate = true;
+            mat.map = texture;
+            mat.needsUpdate = true;
         }
         img.onerror = function(e) {
             console.log(e);
         }
-        return material;
+        return mat;
+    }
+
+    //add camera
+    function setupCamera(near, far, parPos, camRelPos, camRelLook) {
+        var cam = new THREE.PerspectiveCamera(50, width/height, near, far);
+        cam.position.copy(parPos.clone().add(camRelPos));
+        cam.lookAt(parPos.clone().add(camRelLook));
+        scene.add(cam);
+        return cam;
+    }
+
+    //add light
+    function setupLight(type, color) {
+        var lgt = type == "Ambient" ? new THREE.AmbientLight(color) : null;
+        scene.add(lgt);
+        return lgt;
+    }
+
+    //add renderer
+    function setupWebGLRenderer(attr, color) {
+        var rdr = new THREE.WebGLRenderer(attr);
+        rdr.setSize(width, height);
+        rdr.setClearColor(color, 1);
+        container.appendChild(rdr.domElement);
+        return rdr;
     }
 
     return {
