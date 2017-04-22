@@ -8,13 +8,13 @@ var VISUALS = function() {
         renderer = setupWebGLRenderer({antialias: true}, 'black'),
         scene = new THREE.Scene();
 
-    var starPos = new THREE.Vector3(0,0,0),
-        home = new THREE.Vector3(-50,250,400),
-        planet = createSatellite(10, 100, "Phong", "../img/mercury_enhanced_color.jpg", starPos, home),
-        moon = createSatellite(1, 50, "Phong", "../img/europa.jpg", planet.position, new THREE.Vector3(-25, 2, 15));
+    //scene objects
+    var star = createSatellite(200, 100, "", "../img/star_background.jpg", sphere2Rect(0,0,0), sphere2Rect(0,0,0)),
+        planet = createSatellite(20, 100, "Phong", "../img/mercury_enhanced_color.jpg", star.position, sphere2Rect(300,0,0)),
+        moon = createSatellite(1, 100, "Phong", "../img/ganymede.jpg", planet.position, sphere2Rect(80,0,0));
 
     var light = setupLight("Ambient", 'white'),
-        camera = setupCamera(0.01, 1000, home, new THREE.Vector3(0,0,40), new THREE.Vector3(-10,0,0));
+        camera = setupCamera(0.01, 1000, moon.position, sphere2Rect(12,0,0), sphere2Rect(0,0,0));
 
     render();
 
@@ -26,7 +26,9 @@ var VISUALS = function() {
 
     //add satellite
     function createSatellite(radius, numSegments, matType, imgPath, parPos, relPos) {
-        var sat = new THREE.Mesh(new THREE.SphereGeometry(radius, numSegments, numSegments), createTextureMaterial(matType, imgPath));
+        var satGeom = new THREE.SphereGeometry(radius, numSegments, numSegments),
+            satMat = createTextureMaterial(matType, imgPath),
+            sat = new THREE.Mesh(satGeom, satMat);
         sat.position.copy(parPos.clone().add(relPos));
         scene.add(sat);
         return sat;
@@ -51,10 +53,10 @@ var VISUALS = function() {
     }
 
     //add camera
-    function setupCamera(near, far, parPos, camRelPos, camRelLook) {
+    function setupCamera(near, far, parPos, relPos, relLook) {
         var cam = new THREE.PerspectiveCamera(50, width/height, near, far);
-        cam.position.copy(parPos.clone().add(camRelPos));
-        cam.lookAt(parPos.clone().add(camRelLook));
+        cam.position.copy(parPos.clone().add(relPos));
+        cam.lookAt(parPos.clone().add(relLook));
         scene.add(cam);
         return cam;
     }
@@ -73,6 +75,15 @@ var VISUALS = function() {
         rdr.setClearColor(color, 1);
         container.appendChild(rdr.domElement);
         return rdr;
+    }
+
+    //convert coordinates from spherical (r>=0; in degrees: 0<=theta<=180, 0<=phi<360) to rectangular
+    function sphere2Rect(r, theta, phi) {
+        var c = Math.PI/180,
+            x = r*Math.sin(theta*c)*Math.cos(phi*c),
+            y = r*Math.sin(theta*c)*Math.sin(phi*c),
+            z = r*Math.cos(theta*c);
+        return new THREE.Vector3(x,y,z);
     }
 
     return {
