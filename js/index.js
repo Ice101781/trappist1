@@ -1,102 +1,145 @@
 "use strict";
 
-var VISUALS = function() {
+// visuals module
+var Visuals = function() {
 
-    var container = document.getElementById("threejs-container"),
-        width = container.offsetWidth,
-        height = container.offsetHeight,
-        renderer = setupWebGLRenderer({antialias: false}, 'black'),
-        scene = new THREE.Scene();
+    var container, width, height, renderer, scene, light, camera, star, planet, moon;
 
-    //star and planet objects inspired by TRAPPIST-1A and TRAPPIST-1C
-    var star = createSatellite(100, 25, "", "../img/255_185_120_(M8V).jpg", new THREE.Vector3(), new THREE.Vector3()), //100 THREE.js units ~= 51,875 miles
-        planet = createSatellite(12.5, 50, "Phong", "../img/mercury_enhanced_color.jpg", star.position, sphere2Rect(2700,0,0)),
-        moon = createSatellite(0.25, 100, "Phong", "../img/ganymede.jpg", planet.position, sphere2Rect(50,0,0));
+    // math library module
+    var Calc = function() {
+        // convert coordinates from spherical to rectangular *** azimuthal angle = theta, polar angle = phi, r >= 0, 0 <= theta <= PI, 0 <= phi < 2*PI
+        function Vec3FromSpherical(r, theta, phi) {
+            var x = r*Math.cos(theta)*Math.sin(phi),
+                y = r*Math.sin(theta)*Math.sin(phi),
+                z = r*Math.cos(phi);
+            return new THREE.Vector3(x,y,z);
+        }
+        return {
+            Vec3FromSpherical: Vec3FromSpherical
+        };
+    }();
 
-    var light = setupLight("Ambient", 'white'),
-        camR = 25,
-        camTheta = Math.PI/8,
-        camPhi = 15*Math.PI/4,
-        camera = setupCamera(0.01, 5000, moon.position, sphere2Rect(camR, camTheta, camPhi), new THREE.Vector3());
+    // WebGL renderer module
+    var Renderer = function() {
+        function init(attributes, color, opacity) {
+            var ren = new THREE.WebGLRenderer(attributes);
+            ren.setSize(width, height);
+            ren.setClearColor(color, opacity);
+            container.appendChild(ren.domElement);
+            return ren;
+        }
+        return {
+            init: init
+        };
+    }();
 
-    //render the scene
-    (function render() {
-        updateSceneObjects();
+    // light module
+    var Light = function() {
+        function setup(type, color, position) {
+            var position = typeof(position) === 'undefined' ? new THREE.Vector3() : position;
+            switch(type) {
+                case "Ambient":
+                    var lgt = new THREE.AmbientLight(color);
+                    break;
+            }
+            scene.add(lgt);
+            return lgt;
+        }
+        return {
+            setup: setup
+        };
+    }();
+
+    // camera module
+    var Camera = function() {
+        function setup(vfovDeg, near, far) {
+            var cam = new THREE.PerspectiveCamera(vfovDeg, width/height, near, far);
+            scene.add(cam);
+            return cam;
+        }
+        // orbit module
+        var Orbit = function() {
+            var camR = 75,
+                camTheta = Math.PI/4,
+                camPhi = Math.PI/6;
+            function update(posTgt, lookTgt, speed) {
+                camPhi += speed;
+                camera.position.x = posTgt.position.x + camR*Math.cos(camTheta)*Math.sin(camPhi);
+                camera.position.y = posTgt.position.y + camR*Math.sin(camTheta)*Math.sin(camPhi);
+                camera.position.z = posTgt.position.z + camR*Math.cos(camPhi);
+                camera.lookAt(lookTgt.position);
+            }
+            return {
+                update: update
+            };
+        }();
+        return {
+            setup: setup,
+            Orbit: Orbit
+        };
+    }();
+
+    // satellite module
+    var Satellite = function() {
+        function create(radius, numSegments, matType, imgPath, parPos, relPos) {
+            // texture mapping
+            function textureMaterial() {
+                var img = new Image(),
+                    mat = matType === "Phong" ? new THREE.MeshPhongMaterial() : new THREE.MeshBasicMaterial();
+                img.src = imgPath;
+                img.onload = function() {
+                    var texture = new THREE.Texture(this);
+                    texture.needsUpdate = true;
+
+                    mat.map = texture;
+                    mat.needsUpdate = true;
+                }
+                img.onerror = function(e) { console.log(e) }
+                return mat;
+            }
+            var sat = new THREE.Mesh(new THREE.SphereGeometry(radius, numSegments, numSegments), textureMaterial());
+            sat.position.copy(parPos.clone().add(relPos));
+            scene.add(sat);
+            return sat;
+        }
+        return {
+            create: create
+        };
+    }();
+
+    // render the scene
+    function render() {
+        Camera.Orbit.update(planet, planet, 0.005);
         renderer.render(scene, camera);
         requestAnimationFrame(render);
-    })();
-
-    //convert coordinates from spherical to rectangular (azimuthal angle = theta, polar angle = phi; r>=0, 0<=theta<=PI, 0<=phi<2*PI)
-    function sphere2Rect(r, theta, phi) {
-        var x = r*Math.cos(theta)*Math.sin(phi),
-            y = r*Math.sin(theta)*Math.sin(phi),
-            z = r*Math.cos(phi);
-        return new THREE.Vector3(x,y,z);
     }
 
-    //add renderer
-    function setupWebGLRenderer(attr, color) {
-        var rdr = new THREE.WebGLRenderer(attr);
-        rdr.setSize(width, height);
-        rdr.setClearColor(color, 1);
-        container.appendChild(rdr.domElement);
-        return rdr;
+    // initialize the scene
+    function init() {
+        container = document.getElementById("threejs-container");
+        width = container.offsetWidth;
+        height = container.offsetHeight;
+        renderer = Renderer.init({antialias: false}, 'black', 1);
+        scene = new THREE.Scene();
+        light = Light.setup("Ambient", 'white');
+        camera = Camera.setup(50, 0.01, 5000);
+        /*
+        ** star and planet objects inspired by TRAPPIST-1A (T-1A) and TRAPPIST-1C (T-1C)
+        **
+        ** 100 units = 51,875 miles, approx. radius of T-1A
+        **
+        ** 12.5 units, approx. scaled radius of T-1C
+        **
+        ** 2700 units, approx. scaled distance between T-1A and T-1C
+        */
+        star = Satellite.create(100, 25, "", "../img/255_185_120_(M8V).jpg", new THREE.Vector3(), new THREE.Vector3());
+        planet = Satellite.create(12.5, 50, "Phong", "../img/mercury_enhanced_color.jpg", star.position, Calc.Vec3FromSpherical(2700,0,0));
+        moon = Satellite.create(0.25, 100, "Phong", "../img/ganymede.jpg", planet.position, Calc.Vec3FromSpherical(30,0,0));
+    
+        render();
     }
 
-    //add light
-    function setupLight(type, color) {
-        var lgt = type == "Ambient" ? new THREE.AmbientLight(color) : null;
-        scene.add(lgt);
-        return lgt;
-    }
-
-    //add camera
-    function setupCamera(near, far, parPos, relPos, relLook) {
-        var cam = new THREE.PerspectiveCamera(50, width/height, near, far);
-        cam.position.copy(parPos.clone().add(relPos));
-        cam.lookAt(parPos.clone().add(relLook));
-        scene.add(cam);
-        return cam;
-    }
-
-    //load and add texture to material
-    function createTextureMaterial(matType, imgPath) {
-        var img = new Image(),
-            mat = matType === "Phong" ? new THREE.MeshPhongMaterial() : new THREE.MeshBasicMaterial();
-        img.src = imgPath;
-        img.onload = function() {
-            var texture = new THREE.Texture(this);
-            texture.needsUpdate = true;
-
-            mat.map = texture;
-            mat.needsUpdate = true;
-        }
-        img.onerror = function(e) {
-            console.log(e);
-        }
-        return mat;
-    }
-
-    //add satellite
-    function createSatellite(radius, numSegments, matType, imgPath, parPos, relPos) {
-        var satGeom = new THREE.SphereGeometry(radius, numSegments, numSegments),
-            satMat = createTextureMaterial(matType, imgPath),
-            sat = new THREE.Mesh(satGeom, satMat);
-        sat.position.copy(parPos.clone().add(relPos));
-        scene.add(sat);
-        return sat;
-    }
-
-    //update
-    function updateSceneObjects() {
-        //camera orbit
-        camPhi += 0.00005;
-        camera.position.x = moon.position.x + camR*Math.cos(camTheta)*Math.sin(camPhi);
-        camera.position.y = moon.position.y + camR*Math.sin(camTheta)*Math.sin(camPhi);
-        camera.position.z = moon.position.z + camR*Math.cos(camPhi);
-        camera.lookAt(moon.position);
-    }
-
-    //API
-    return { };
-}
+    return {
+        init: init
+    };
+}();
