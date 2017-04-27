@@ -3,130 +3,71 @@
 /*********************************************************************************\ 
 ** star and planet objects inspired by TRAPPIST-1A (T-1A) and TRAPPIST-1C (T-1C) **
 **                                                                               **
-**                  100 units = 51,875 miles ~ radius of T-1A                    **
+**                    100 units = 52,307mi ~ radius of T-1A                      **
 **                                                                               **
-**                     12.5 units ~ scaled radius of T-1C                        **
+**                    8.26 units ~ 4,319mi ~ radius of T-1C                      **
 **                                                                               **
-**              2700 units ~ scaled distance between T-1A and T-1C               **
+**           2,787 units ~ 1,457,800mi ~ distance between T-1A and T-1C          **
+**                                                                               **
+**                 2.063 units ~ scaled radius of Earth's moon                   **
+**                                                                               **
+**                 457 units ~ scaled distance to Earth's moon                   **
 \*********************************************************************************/
 
 var starSystem;
 
 window.onload = function() {
-    // add a method to convert from rectangular to spherical coordinates
-    Math.sphericalToVec3 = function(r, theta, phi) {
-        var x = r*Math.cos(theta)*Math.sin(phi),
-            y = r*Math.sin(theta)*Math.sin(phi),
-            z = r*Math.cos(phi);
-        return new THREE.Vector3(x,y,z);
-    }
+    function spacePlace() {
+        // private variables
+        var starRad = 100,
+            planetRad = 8.26,
+            moonRad = 2.063,
+            starPos = new THREE.Vector3(),
+            planetPos = starPos.clone().add(Math.sphericalToVec3(2787,0,0)),
+            moonPos = planetPos.clone().add(Math.sphericalToVec3(457,0,6*Math.PI/7)),
+            shipCamPos = planetPos.clone().add(Math.sphericalToVec3(30, 0.25, 0.8)),
+            shipCamTgt = Math.sphericalToVec3(2400,0,0);
 
-    // renderer
-    function Renderer(attr) {
-        THREE.WebGLRenderer.call(this, attr);
-    }
-    (function(superProto) {
-        Renderer.prototype = Object.create(superProto);
-        Renderer.prototype.constructor = Renderer;
-
-        Renderer.prototype.setup = function(col, opac, par) {
-            this.setClearColor(col, opac);
-            this.setSize(par.offsetWidth, par.offsetHeight);
-            par.appendChild(this.domElement);
-        }
-    })(THREE.WebGLRenderer.prototype);
-
-
-    // camera
-    function Camera(vfovDeg, asp, near) {
-        THREE.PerspectiveCamera.call(this, vfovDeg, asp, near, near*Math.pow(10,5));
-    }
-    (function(superProto) {
-        Camera.prototype = Object.create(superProto);
-        Camera.prototype.constructor = Camera;
-
-        Camera.prototype.orbit = function() {
-            // TO DO
-        }
-        Camera.prototype.repel = function(tgt, spd) {
-            this.position.z += spd;
-            this.lookAt(tgt);
-        }
-    })(THREE.PerspectiveCamera.prototype);
-
-
-    // star, planet, moon, etc.
-    function Satellite(rad, numSegs, matTyp, imgLoc) {
-        // map texture from image to material
-        function texToMat(matTyp, imgLoc) {
-            var img = new Image(),
-                mat = matTyp === "Phong" ? new THREE.MeshPhongMaterial() : new THREE.MeshBasicMaterial();
-            img.src = imgLoc;
-            img.onload = function() {
-                var tex = new THREE.Texture(this);
-                tex.needsUpdate = true;
-                mat.map = tex;
-                mat.needsUpdate = true;
-            }
-            img.onerror = function(e) {
-                console.log(e)
-            }
-            return mat;
-        }
-
-        THREE.Mesh.call(this, new THREE.SphereGeometry(rad, numSegs, numSegs), texToMat(matTyp, imgLoc));
-    }
-    (function(superProto) {
-        Satellite.prototype = Object.create(superProto);
-        Satellite.prototype.constructor = Satellite;
-    })(THREE.Mesh.prototype);
-
-
-    function spaceScene() {
-        var container = document.getElementById("threejs-container"),
-            renderer = new Renderer({antialias: false}),
-            universe = new THREE.Scene(),
-            ambLight = new THREE.AmbientLight("rgb(66,93,120)"),
-            ptLight = new THREE.PointLight("rgb(255,185,120)"),
-            shipCam = new Camera(45, container.offsetWidth/container.offsetHeight, 0.05),
-            star = new Satellite(100, 20, "", "../img/255_185_120_(M8V).jpg"),
-            planet = new Satellite(12.5, 100, "Phong", "../img/mercury_enhanced_color.jpg"),
-            moon = new Satellite(3, 100, "Phong", "../img/ganymede.jpg"),
-            animate,
+        var self = this,
+            container = document.getElementById("threejs-container"),
+            renderer = new Renderer({antialias: false}, "rgb(0,0,0)", 1, container),
+            cosmos = new THREE.Scene(),
+            ambientLight = new AmbLight("rgb(66,93,120)", cosmos),
+            pointLight = new PtLight("rgb(255,185,120)", starPos, cosmos),
+            star = new Satellite(starRad, 25, "", "../img/255_185_120_(M8V).jpg", starPos, cosmos),
+            planet = new Satellite(planetRad, 100, "Phong", "../img/mercury_enhanced_color.jpg", planetPos, cosmos),
+            moon = new Satellite(moonRad, 100, "Phong", "../img/ganymede.jpg", moonPos, cosmos),
+            shipCam = new Camera(45, container.offsetWidth/container.offsetHeight, 0.05, shipCamPos, cosmos),
+            // state variables
+            REQUEST_ID,
             PLAYING;
 
-        renderer.setup("rgb(0,0,0)", 1, container);
-        star.position.copy(new THREE.Vector3());
-        planet.position.copy(star.position.clone().add(Math.sphericalToVec3(2700,0,0)));
-        moon.position.copy(planet.position.clone().add(Math.sphericalToVec3(200,0,4*Math.PI/5)));
-        shipCam.position.copy(planet.position.clone().add(Math.sphericalToVec3(45, 0.25, 0.8)));
-        universe.add(ambLight, ptLight, shipCam, star, planet, moon);
-
-        function render() {
-            // update scene objects
-            shipCam.repel(Math.sphericalToVec3(2400,0,0), 0.1);
-
-            renderer.render(universe, shipCam);
-            animate = requestAnimationFrame(render);
-        }
-
         // instance API
-        if(typeof(this.toggleAnimation) !== "function") {
-            spaceScene.prototype.toggleAnimation = function() {
+        self.isSpacePlace = true;
+
+        if(typeof(self.toggleAnimation) !== "function") {
+            // stop or start animation
+            spacePlace.prototype.toggleAnimation = function() {
                 switch(true) {
                     case !PLAYING:
-                        render();
+                        (function render() {
+                            (function update() {
+                                shipCam.repel(shipCamTgt, 0.01);
+                            })();
+                            renderer.render(cosmos, shipCam);
+                            REQUEST_ID = requestAnimationFrame(render);
+                        })();
                         PLAYING = true;
-                        return console.log("Animation started.");
+                        return "Animation started.";
                     case PLAYING:
-                        cancelAnimationFrame(animate);
+                        cancelAnimationFrame(REQUEST_ID);
                         PLAYING = false;
-                        return console.log("Animation stopped.");
+                        return "Animation stopped.";
                 }
             }
         }
     }
 
-    starSystem = new spaceScene();
+    starSystem = new spacePlace();
     starSystem.toggleAnimation();
 }
