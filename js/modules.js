@@ -1,13 +1,5 @@
 "use strict";
 
-// add a method to convert from rectangular to spherical coordinates
-Math.sphericalToVec3 = function(r, theta, phi) {
-    var x = r*Math.cos(theta)*Math.sin(phi),
-        y = r*Math.sin(theta)*Math.sin(phi),
-        z = r*Math.cos(phi);
-    return new THREE.Vector3(x,y,z);
-}
-
 // renderer
 function Renderer(attr, col, opac, par) {
     THREE.WebGLRenderer.call(this, attr);
@@ -70,12 +62,20 @@ function Camera(vfov, asp, near, pos, scene) {
         scene.add(this);
     }
     // at 60fps, a speed of 0.01 units/frame is ~ 0.1744% of the speed of light
-    Camera.prototype.orbit = function() {
-        // TO DO
-    }
-    Camera.prototype.repel = function(tgt, spd) {
-        this.lookAt(tgt);
+    Camera.prototype.orbit = function(axis, spd, pt) {
+        // thanks to @WestLangley
+        var rotationQuaternion = new THREE.Quaternion();
+        return function(axis, spd, pt) {
+            rotationQuaternion.setFromAxisAngle(axis, spd);
+            this.quaternion.multiplyQuaternions(rotationQuaternion, this.quaternion);
+            this.position.sub(pt);
+            this.position.applyQuaternion(rotationQuaternion);
+            this.position.add(pt);
+        };
+    }();
+    Camera.prototype.repel = function(spd, pt) {
         this.position.z += spd;
+        this.lookAt(pt);
     }
 })(THREE.PerspectiveCamera.prototype);
 
