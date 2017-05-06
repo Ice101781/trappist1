@@ -50,7 +50,7 @@ function PtLight(col, pos, scene) {
 
 // camera
 function Camera(vfov, asp, near, pos, scene) {
-    THREE.PerspectiveCamera.call(this, vfov, asp, near, near*Math.pow(10,5));
+    THREE.PerspectiveCamera.call(this, vfov, asp, near, near*Math.pow(10,6));
     this.setup(pos, scene);
 }
 (function(superProto) {
@@ -67,7 +67,7 @@ function Camera(vfov, asp, near, pos, scene) {
         var rotationQuaternion = new THREE.Quaternion();
         return function(axis, spd, pt) {
             rotationQuaternion.setFromAxisAngle(axis, spd);
-            this.quaternion.multiplyQuaternions(rotationQuaternion, this.quaternion);
+            this.quaternion.multiply(rotationQuaternion);
             this.position.sub(pt);
             this.position.applyQuaternion(rotationQuaternion);
             this.position.add(pt);
@@ -80,9 +80,11 @@ function Camera(vfov, asp, near, pos, scene) {
 })(THREE.PerspectiveCamera.prototype);
 
 
-// star, planet, moon, etc.
-function Satellite(rad, numSegs, matTyp, imgLoc, pos, scene) {
-    THREE.Mesh.call(this, new THREE.SphereGeometry(rad, numSegs, numSegs), matTyp === "Phong" ? new THREE.MeshPhongMaterial() : new THREE.MeshBasicMaterial());
+// galaxy, star, planet, moon
+function Satellite(rad, matTyp, imgLoc, pos, scene) {
+    THREE.Mesh.call(this, new THREE.SphereGeometry(rad, 100, 100), matTyp === "Phong" ? new THREE.MeshPhongMaterial() : new THREE.MeshBasicMaterial());
+    // for galaxy, apply material to inside of sphere
+    if(imgLoc == "../img/starmap_paulbourke_dot_net") { this.material.side = THREE.BackSide }
     this.setup(imgLoc, pos, scene);
 }
 (function(superProto) {
@@ -101,8 +103,8 @@ function Satellite(rad, numSegs, matTyp, imgLoc, pos, scene) {
         img.src = imgLoc;
         img.onload = function() {
             var tex = new THREE.Texture(this);
-            tex.needsUpdate = true;
             self.material.map = tex;
+            tex.needsUpdate = true;
             self.material.needsUpdate = true;
         }
         img.onerror = function(e) { console.log(e) }

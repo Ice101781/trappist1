@@ -19,15 +19,13 @@ var starSystem;
 window.onload = function() {
     function spacePlace() {
         // private variables
-        var starRadius = 100,
-            planetRadius = 8.26,
-            moonRadius = 2.063,
-            starShipOrbitSpeed = 0.0001,
+        var galaxyPosition = new THREE.Vector3(),
             starPosition = new THREE.Vector3(),
             planetPosition = starPosition.clone().add(Math.SpherToVec3(2787,0,0)),
             moonPosition = planetPosition.clone().add(Math.SpherToVec3(457,0,2.69)),
-            starShipPosition = planetPosition.clone().add(Math.SpherToVec3(25,0.25,0.5)),
-            starShipOrbitAxis = new THREE.Vector3(1,0.75,0);
+            shipPosition = planetPosition.clone().add(Math.SpherToVec3(17.5,0.5,0.75)),
+            shipOrbitAxis = new THREE.Vector3(1,0.75,0).normalize(),
+            shipOrbitSpeed = 0.00005;
 
         var self = this,
             container = document.getElementById("threejs-container"),
@@ -35,10 +33,11 @@ window.onload = function() {
             cosmos = new THREE.Scene(),
             ambientLight = new AmbLight("rgb(66,93,120)", cosmos),
             pointLight = new PtLight("rgb(255,185,120)", starPosition, cosmos),
-            star = new Satellite(starRadius, 25, "", "../img/255_185_120_(M8V).jpg", starPosition, cosmos),
-            planet = new Satellite(planetRadius, 100, "Phong", "../img/mercury_enhanced_color.jpg", planetPosition, cosmos),
-            moon = new Satellite(moonRadius, 100, "Phong", "../img/ganymede.jpg", moonPosition, cosmos),
-            starShip = new Camera(45, container.offsetWidth/container.offsetHeight, 0.05, starShipPosition, cosmos),
+            galaxy = new Satellite(25000, "", "../img/starmap_paulbourke_dot_net", galaxyPosition, cosmos),
+            star = new Satellite(100, "", "../img/255_185_120_(M8V).jpg", starPosition, cosmos),
+            planet = new Satellite(8.26, "Phong", "../img/mercury_enhanced_color_nasa.jpg", planetPosition, cosmos),
+            moon = new Satellite(2.063, "Phong", "../img/ganymede_nasa.jpg", moonPosition, cosmos),
+            ship = new Camera(45, container.offsetWidth/container.offsetHeight, 0.05, shipPosition, cosmos),
             // state variables
             REQUEST_ID,
             PLAYING;
@@ -53,9 +52,9 @@ window.onload = function() {
                     case !PLAYING:
                         (function render() {
                             (function update() {
-                                starShip.orbit(starShipOrbitAxis, starShipOrbitSpeed, planetPosition);
+                                ship.orbit(shipOrbitAxis, shipOrbitSpeed, planetPosition);
                             })();
-                            renderer.render(cosmos, starShip);
+                            renderer.render(cosmos, ship);
                             REQUEST_ID = requestAnimationFrame(render);
                         })();
                         PLAYING = true;
