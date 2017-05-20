@@ -5,8 +5,8 @@ function Renderer(attr, col, opac, par) {
     THREE.WebGLRenderer.call(this, attr);
     this.setup(col, opac, par);
 }
-(function(superProto) {
-    Renderer.prototype = Object.create(superProto);
+(function(supProto) {
+    Renderer.prototype = Object.create(supProto);
     Renderer.prototype.constructor = Renderer;
 
     Renderer.prototype.setup = function(col, opac, par) {
@@ -22,8 +22,8 @@ function AmbLight(col, scene) {
     THREE.AmbientLight.call(this, col);
     this.setup(scene);
 }
-(function(superProto) {
-    AmbLight.prototype = Object.create(superProto);
+(function(supProto) {
+    AmbLight.prototype = Object.create(supProto);
     AmbLight.prototype.constructor = AmbLight;
 
     AmbLight.prototype.setup = function(scene) {
@@ -37,8 +37,8 @@ function PtLight(col, pos, scene) {
     THREE.PointLight.call(this, col);
     this.setup(pos, scene);
 }
-(function(superProto) {
-    PtLight.prototype = Object.create(superProto);
+(function(supProto) {
+    PtLight.prototype = Object.create(supProto);
     PtLight.prototype.constructor = PtLight;
 
     PtLight.prototype.setup = function(pos, scene) {
@@ -50,11 +50,11 @@ function PtLight(col, pos, scene) {
 
 // camera
 function Camera(vfov, asp, near, pos, scene) {
-    THREE.PerspectiveCamera.call(this, vfov, asp, near, near*Math.pow(10,6));
+    THREE.PerspectiveCamera.call(this, vfov, asp, near, near*Math.pow(10,5));
     this.setup(pos, scene);
 }
-(function(superProto) {
-    Camera.prototype = Object.create(superProto);
+(function(supProto) {
+    Camera.prototype = Object.create(supProto);
     Camera.prototype.constructor = Camera;
 
     Camera.prototype.setup = function(pos, scene) {
@@ -87,8 +87,8 @@ function Satellite(rad, matTyp, imgLoc, pos, scene) {
     if(imgLoc == "../img/starmap_paulbourke_dot_net") { this.material.side = THREE.BackSide }
     this.setup(imgLoc, pos, scene);
 }
-(function(superProto) {
-    Satellite.prototype = Object.create(superProto);
+(function(supProto) {
+    Satellite.prototype = Object.create(supProto);
     Satellite.prototype.constructor = Satellite;
 
     Satellite.prototype.setup = function(imgLoc, pos, scene) {

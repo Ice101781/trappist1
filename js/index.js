@@ -9,7 +9,7 @@
 **                                                                               **
 **           2,787 units ~ 1,457,800mi ~ distance between T-1A and T-1C          **
 **                                                                               **
-**                 2.063 units ~ scaled radius of Earth's moon                   **
+**                 6.189 units ~ 3x scaled radius of Earth's moon                **
 **                                                                               **
 **                 457 units ~ scaled distance to Earth's moon                   **
 \*********************************************************************************/
@@ -33,11 +33,11 @@ window.onload = function() {
             cosmos = new THREE.Scene(),
             ambientLight = new AmbLight("rgb(66,93,120)", cosmos),
             pointLight = new PtLight("rgb(255,185,120)", starPosition, cosmos),
-            galaxy = new Satellite(25000, "", "../img/starmap_paulbourke_dot_net", galaxyPosition, cosmos),
+            galaxy = new Satellite(5000, "", "../img/starmap_paulbourke_dot_net", galaxyPosition, cosmos),
             star = new Satellite(100, "", "../img/255_185_120_(M8V).jpg", starPosition, cosmos),
             planet = new Satellite(8.26, "Phong", "../img/mercury_enhanced_color_nasa.jpg", planetPosition, cosmos),
-            moon = new Satellite(2.063, "Phong", "../img/ganymede_nasa.jpg", moonPosition, cosmos),
-            ship = new Camera(45, container.offsetWidth/container.offsetHeight, 0.05, shipPosition, cosmos),
+            moon = new Satellite(6.189, "Phong", "../img/ganymede_nasa.jpg", moonPosition, cosmos),
+            ship = new Camera(45, container.offsetWidth/container.offsetHeight, 0.1, shipPosition, cosmos),
             // state variables
             REQUEST_ID,
             PLAYING;
