@@ -8,11 +8,11 @@ THREE.VolumetericLightShader = {
   uniforms: {
     tDiffuse: { value: null },
     lightPosition: { value: new THREE.Vector2(0.5, 0.5) },
-    exposure: { value: 0.18 },
-    decay: { value: 0.95 },
+    exposure: { value: 0.25 },
+    decay: { value: 0.96 },
     density: { value: 0.8 },
-    weight: { value: 0.4 },
-    samples: { value: 50 }
+    weight: { value: 0.45 },
+    samples: { value: 80 }
   },
   vertexShader: [
     "varying vec2 vUv;",
@@ -38,7 +38,9 @@ THREE.VolumetericLightShader = {
       "vec4 color = texture2D(tDiffuse, texCoord);",
       "float illuminationDecay = 1.0;",
       "for(int i=0; i < MAX_SAMPLES; i++) {",
-        "if(i == samples) { break }",
+        "if(i == samples) {",
+           "break;",
+        "}",
         "texCoord -= deltaTextCoord;",
         "vec4 sample = texture2D(tDiffuse, texCoord);",
         "sample *= illuminationDecay * weight;",
