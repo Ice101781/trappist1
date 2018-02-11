@@ -16,7 +16,7 @@
 
 var starSystem;
 
-function SpacePlace() {
+function SpacePlace(callback) {
     // private variables
     var galaxyRadius = 50000,
         starRadius = 100,
@@ -73,6 +73,8 @@ function SpacePlace() {
         addBlendPostProc.shdrPass.uniforms.tAdd.value = volLightPostProc.renderTarget.texture;
     })();
 
+    callback();
+
     // instance API
     this.isSpacePlace = true;
 
@@ -93,11 +95,11 @@ function SpacePlace() {
     }
 }
 
-window.onload = function() {
-    starSystem = new SpacePlace();
-    starSystem.toggleAnimation();
-
-    (function delayDisplay() {
-        setTimeout(function() { document.getElementById("load-screen").style.display = "none" }, 3000)
-    })();
+function delayDisplay() {
+    setTimeout(function() {
+        starSystem.toggleAnimation();
+        document.getElementById("load-screen").style.display = "none";
+    }, 20000);
 }
+
+window.onload = function() { starSystem = new SpacePlace(delayDisplay) }
