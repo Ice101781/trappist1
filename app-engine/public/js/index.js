@@ -25,10 +25,11 @@ function SpacePlace() {
         // at 60fps, a speed of 0.01 units/frame is ~ 0.1744% of the speed of light
         orbitSpeed = 0.0003;
 
-    var galaxyMap = "../img/starmap_paulbourke_dot_net",
-        starMap = "../img/255_185_120_(M8V).jpg",
-        planetMap = "../img/mercury_enhanced_color_nasa.jpg",
-        moonMap = "../img/ganymede_nasa.jpg";
+    // use ../public before file paths for local development
+    var galaxyMap = "/images/starmap_paulbourke_dot_net",
+        starMap = "/images/255_185_120_(M8V).jpg",
+        planetMap = "/images/mercury_enhanced_color_nasa.jpg",
+        moonMap = "/images/ganymede_nasa.jpg";
 
     var centerPosition = new THREE.Vector3(),
         planetPosition = centerPosition.clone().add(Math.SpherToVec3(2787,0,0)),
