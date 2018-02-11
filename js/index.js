@@ -16,82 +16,87 @@
 
 var starSystem;
 
-window.onload = function() {
-    function SpacePlace() {
-        // private variables
-        var galaxyRadius = 50000,
-            starRadius = 100,
-            planetRadius = 8.26,
-            moonRadius = 6.189,
-            orbitSpeed = 0.00003;
+function SpacePlace() {
+    // private variables
+    var galaxyRadius = 50000,
+        starRadius = 100,
+        planetRadius = 8.26,
+        moonRadius = 6.189,
+        // at 60fps, a speed of 0.01 units/frame is ~ 0.1744% of the speed of light
+        orbitSpeed = 0.0003;
 
-        var galaxyMap = "../img/starmap_paulbourke_dot_net",
-            starMap = "../img/255_185_120_(M8V).jpg",
-            planetMap = "../img/mercury_enhanced_color_nasa.jpg",
-            moonMap = "../img/ganymede_nasa.jpg";
+    var galaxyMap = "../img/starmap_paulbourke_dot_net",
+        starMap = "../img/255_185_120_(M8V).jpg",
+        planetMap = "../img/mercury_enhanced_color_nasa.jpg",
+        moonMap = "../img/ganymede_nasa.jpg";
 
-        var centerPosition = new THREE.Vector3(),
-            planetPosition = centerPosition.clone().add(Math.SpherToVec3(2787,0,0)),
-            moonPosition = planetPosition.clone().add(Math.SpherToVec3(457,0,2.69)),
-            shipPosition = planetPosition.clone().add(Math.SpherToVec3(20,0.25,0.435)),
-            orbitAxis = new THREE.Vector3(1,1,0).normalize();
+    var centerPosition = new THREE.Vector3(),
+        planetPosition = centerPosition.clone().add(Math.SpherToVec3(2787,0,0)),
+        moonPosition = planetPosition.clone().add(Math.SpherToVec3(457,0,2.69)),
+        shipPosition = planetPosition.clone().add(Math.SpherToVec3(20,0.25,0.435)),
+        orbitAxis = new THREE.Vector3(1,1,0).normalize();
 
-        var container = document.getElementById("threejs-container"),
-            renderer = new Renderer({antialias: false}, "rgb(0,0,0)", 1, container),
-            cosmos = new THREE.Scene();
+    var container = document.getElementById("threejs-container"),
+        renderer = new Renderer({antialias: false}, "rgb(0,0,0)", 1, container),
+        cosmos = new THREE.Scene();
 
-        var ambientLight = new AmbLight("rgb(44,62,80)", cosmos), // rgb(66,93,120)
-            pointLight = new PtLight("rgb(255,185,120)", centerPosition, cosmos),
-            galaxy = new Satellite(galaxyRadius, "", galaxyMap, centerPosition, cosmos),
-            star = new Satellite(starRadius, "", starMap, centerPosition, cosmos),
-            planet = new Satellite(planetRadius, "Phong", planetMap, planetPosition, cosmos),
-            occlusionPlanet = new Satellite(planetRadius, "", "", planetPosition, cosmos),
-            moon = new Satellite(moonRadius, "Phong", moonMap, moonPosition, cosmos),
-            occlusionMoon = new Satellite(moonRadius, "", "", moonPosition, cosmos),
-            ship = new Camera(45, container.offsetWidth/container.offsetHeight, 0.1, shipPosition, cosmos);
+    var ambientLight = new AmbLight("rgb(44,62,80)", cosmos), // rgb(66,93,120)
+        pointLight = new PtLight("rgb(255,185,120)", centerPosition, cosmos),
+        galaxy = new Satellite(galaxyRadius, "", galaxyMap, centerPosition, cosmos),
+        star = new Satellite(starRadius, "", starMap, centerPosition, cosmos),
+        planet = new Satellite(planetRadius, "Phong", planetMap, planetPosition, cosmos),
+        occlusionPlanet = new Satellite(planetRadius, "", "", planetPosition, cosmos),
+        moon = new Satellite(moonRadius, "Phong", moonMap, moonPosition, cosmos),
+        occlusionMoon = new Satellite(moonRadius, "", "", moonPosition, cosmos),
+        ship = new Camera(45, container.offsetWidth/container.offsetHeight, 0.1, shipPosition, cosmos);
 
-        var volLightPostProc = new PostProcessor(THREE.VolumetricLightShader, renderer, cosmos, ship),
-            addBlendPostProc = new PostProcessor(THREE.AdditiveBlendingShader, renderer, cosmos, ship);
+    var volLightPostProc = new PostProcessor(THREE.VolumetricLightShader, renderer, cosmos, ship),
+        addBlendPostProc = new PostProcessor(THREE.AdditiveBlendingShader, renderer, cosmos, ship);
 
-        var REQUEST_ID,
-            PLAYING;
+    var REQUEST_ID,
+        PLAYING;
 
-        // private functions
-        (function assignRenderTexture() {
-            addBlendPostProc.shdrPass.uniforms.tAdd.value = volLightPostProc.renderTarget.texture;
-        })();
+    // private functions
+    function update() {
+        ship.orbit(orbitAxis, orbitSpeed, planetPosition);
+        volLightPostProc.setUniforms(centerPosition, ship);
+        renderer.compositeRender(ship, [addBlendPostProc, volLightPostProc]);
+    }
 
-        function update() {
-            ship.orbit(orbitAxis, orbitSpeed, planetPosition);
-            volLightPostProc.setUniforms(centerPosition, ship);
-            renderer.compositeRender(ship, [addBlendPostProc, volLightPostProc]);
-        }
+    function nextFrame() {
+        update();
+        REQUEST_ID = requestAnimationFrame(nextFrame);
+    }
 
-        function nextFrame() {
-            update();
-            REQUEST_ID = requestAnimationFrame(nextFrame);
-        }
+    (function assignRenderTexture() {
+        addBlendPostProc.shdrPass.uniforms.tAdd.value = volLightPostProc.renderTarget.texture;
+    })();
 
-        // instance API
-        this.isSpacePlace = true;
+    // instance API
+    this.isSpacePlace = true;
 
-        if(typeof(this.toggleAnimation) !== "function") {
-            // stop or start animation
-            SpacePlace.prototype.toggleAnimation = function() {
-                switch(true) {
-                    case !PLAYING:
-                        nextFrame();
-                        PLAYING = true;
-                        return "Animation started.";
-                    case PLAYING:
-                        cancelAnimationFrame(REQUEST_ID);
-                        PLAYING = false;
-                        return "Animation stopped.";
-                }
+    if(typeof(this.toggleAnimation) !== "function") {
+        // stop or start animation
+        SpacePlace.prototype.toggleAnimation = function() {
+            switch(true) {
+                case !PLAYING:
+                    nextFrame();
+                    PLAYING = true;
+                    return "Animation started.";
+                case PLAYING:
+                    cancelAnimationFrame(REQUEST_ID);
+                    PLAYING = false;
+                    return "Animation stopped.";
             }
         }
     }
+}
 
+window.onload = function() {
     starSystem = new SpacePlace();
     starSystem.toggleAnimation();
+
+    (function delayDisplay() {
+        setTimeout(function() { document.getElementById("load-screen").style.display = "none" }, 3000)
+    })();
 }

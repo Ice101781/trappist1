@@ -68,7 +68,6 @@ function Camera(vfov, asp, near, pos, scn) {
         this.position.copy(pos);
         scn.add(this);
     }
-    // at 60fps, a speed of 0.01 units/frame is ~ 0.1744% of the speed of light
     Camera.prototype.orbit = function(axis, spd, pt) {
         // thanks to @WestLangley
         var rotationQuaternion = new THREE.Quaternion();
@@ -162,4 +161,3 @@ function PostProcessor(shdr, rdr, scn, cam) {
         }
     }
 })(THREE.EffectComposer.prototype);
-
