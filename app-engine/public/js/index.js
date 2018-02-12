@@ -16,7 +16,7 @@
 
 var starSystem;
 
-function SpacePlace(callback) {
+function SpacePlace() {
     // private variables
     var galaxyRadius = 50000,
         starRadius = 100,
@@ -25,11 +25,11 @@ function SpacePlace(callback) {
         // at 60fps, a speed of 0.01 units/frame is ~ 0.1744% of the speed of light
         orbitSpeed = 0.0003;
 
-    // use ../public before file paths for local development
-    var galaxyMap = "/images/starmap_paulbourke_dot_net",
-        starMap = "/images/255_185_120_(M8V).jpg",
-        planetMap = "/images/mercury_enhanced_color_nasa.jpg",
-        moonMap = "/images/ganymede_nasa.jpg";
+    // use '.' before file paths for local development
+    var galaxyMap = "./images/starmap_paulbourke_dot_net",
+        starMap = "./images/255_185_120_(M8V).jpg",
+        planetMap = "./images/mercury_enhanced_color_nasa.jpg",
+        moonMap = "./images/ganymede_nasa.jpg";
 
     var centerPosition = new THREE.Vector3(),
         planetPosition = centerPosition.clone().add(Math.SpherToVec3(2787,0,0)),
@@ -73,8 +73,6 @@ function SpacePlace(callback) {
         addBlendPostProc.shdrPass.uniforms.tAdd.value = volLightPostProc.renderTarget.texture;
     })();
 
-    callback();
-
     // instance API
     this.isSpacePlace = true;
 
@@ -95,11 +93,9 @@ function SpacePlace(callback) {
     }
 }
 
-function delayDisplay() {
-    setTimeout(function() {
-        starSystem.toggleAnimation();
-        document.getElementById("load-screen").style.display = "none";
-    }, 20000);
-}
+starSystem = new SpacePlace();
 
-window.onload = function() { starSystem = new SpacePlace(delayDisplay) }
+window.onload = function() {
+    starSystem.toggleAnimation();
+    document.getElementById("load-screen").style.display = "none";
+}

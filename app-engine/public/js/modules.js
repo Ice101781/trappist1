@@ -99,12 +99,12 @@ function Satellite(rad, matTyp, imgLoc, pos, scn) {
         if(imgLoc !== "") {
             switch(imgLoc) {
                 // galaxy - darken material and ensure it gets mapped to the inside of its geometry
-                case "/images/starmap_paulbourke_dot_net":
+                case "./images/starmap_paulbourke_dot_net":
                     this.material.color.setHex(0x888888);
                     this.material.side = THREE.BackSide;
                     break;
                 // star - add to occlusion layer
-                case "/images/255_185_120_(M8V).jpg":
+                case "./images/255_185_120_(M8V).jpg":
                     this.layers.set(1);
                     break;
             }
